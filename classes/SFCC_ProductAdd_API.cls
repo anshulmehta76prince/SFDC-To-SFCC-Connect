@@ -3,14 +3,14 @@ public class SFCC_ProductAdd_API {
     public static String access_token;
     
     @future(callout=true)
-    public static void getSFCC_ClientToken(){
+    public static void getSFCC_ClientToken(){ // Method for getting client access token
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         request.setEndpoint('https://account.demandware.com/dwsso/oauth2/access_token');
         request.setMethod('POST');
 
-        String username = 'd9a8adca-4290-47f3-8e9b-74eecd8d1e18';
-String password = 'S485WLifw6!!!!!';
+        String username = 'Your Client Id';
+        String password = 'Your Password';
         
         Blob headerValue = Blob.valueOf(username + ':' + password);
         String authorizationHeader = 'BASIC ' + EncodingUtil.base64Encode(headerValue);
@@ -29,10 +29,10 @@ String password = 'S485WLifw6!!!!!';
         access_token = res.get('access_token').toString();    
     }
     @future(callout=true)
-    public static void addProduct_in_SFCC(String token){
-        String host_server = 'dev08-na-conair.demandware.net';
-        String api_version = 'v20_4';
-        String catalogId = 'US-WaringCatalog';
+    public static void addProduct_in_SFCC(String token){ // Method creates the product in SFCC 
+        String host_server = 'dev08-na-conair.demandware.net'; // SFCC Sandbox Instance Name
+        String api_version = 'v20_4'; // OCAPI Version
+        String catalogId = 'Catalog Id'; // Your Catalog Id
         
         for(Product2 p: products){
             Http http = new Http();
@@ -51,7 +51,7 @@ String password = 'S485WLifw6!!!!!';
             System.debug(response.getStatusCode());
         }
     }
-    public static void addProduct_To_SFCC(List<Product2> prod){
+    public static void addProduct_To_SFCC(List<Product2> prod){ // Method Call after Product insert in SFDC
         for(Product2 p: prod){
             products.add(p);
         }
