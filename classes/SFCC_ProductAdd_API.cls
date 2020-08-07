@@ -1,61 +1,51 @@
 public class SFCC_ProductAdd_API {
-    public static List<Product2> products = new List<Product2>();
-    public static String access_token;
-    
     @future(callout=true)
-    public static void getSFCC_ClientToken(){ // Method for getting client access token
-        Http http = new Http();
-        HttpRequest request = new HttpRequest();
-        request.setEndpoint('https://account.demandware.com/dwsso/oauth2/access_token');
-        request.setMethod('POST');
+    public static void addProduct_in_SFCC(Set<Id> prodId){
+        
+        // Steps to get the Client Access Token
+        String access_token;
+        Http http1 = new Http();
+        HttpRequest request1 = new HttpRequest();
+        request1.setEndpoint('https://account.demandware.com/dwsso/oauth2/access_token');
+        request1.setMethod('POST');
 
-        String username = 'Your Client Id';
-        String password = 'Your Password';
+        String username = 'd9a8adca-4290-47f3-8e9b-74eecd8d1e18';
+		String password = 'S485WLifw6!!!!!';
         
         Blob headerValue = Blob.valueOf(username + ':' + password);
-        String authorizationHeader = 'BASIC ' + EncodingUtil.base64Encode(headerValue);
-        //System.debug(authorizationHeader);
+        String authorizationHeader1 = 'BASIC ' + EncodingUtil.base64Encode(headerValue);
         String payload = 'grant_type=client_credentials';
-        //System.debug(payload);
-        request.setHeader('Authorization', authorizationHeader);
-        request.setHeader('Content-Type', 'application/x-www-form-urlencoded');
-        request.setBody(payload);
+        request1.setHeader('Authorization', authorizationHeader1);
+        request1.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+        request1.setBody(payload);
+        HttpResponse response1 = http1.send(request1);
+        Map<String, Object> res = (Map<String, Object>)JSON.deserializeUntyped(response1.getBody());
+        access_token = res.get('access_token').toString();
         
-        HttpResponse response = http.send(request);
-        System.debug(response);
-        //System.debug(response.getBody());
-        Map<String, Object> res = (Map<String, Object>)JSON.deserializeUntyped(response.getBody());
-        System.debug(res.get('access_token'));
-        access_token = res.get('access_token').toString();    
-    }
-    @future(callout=true)
-    public static void addProduct_in_SFCC(String token){ // Method creates the product in SFCC 
-        String host_server = 'dev08-na-conair.demandware.net'; // SFCC Sandbox Instance Name
-        String api_version = 'v20_4'; // OCAPI Version
-        String catalogId = 'Catalog Id'; // Your Catalog Id
-        
-        for(Product2 p: products){
-            Http http = new Http();
-            HttpRequest request = new HttpRequest();
-            request.setEndpoint('https://'+host_server+'/s/Sites-Site/dw/data/'+api_version+'/products/'+p.Id);
-            request.setMethod('PUT');
-            String authorizationHeader = 'Bearer ' + token;
-            //System.debug(authorizationHeader);
-            request.setHeader('Authorization', authorizationHeader);
-            request.setHeader('Content-Type', 'application/json');
+        // Steps to Add the Product in SFCC
+        String host_server = 'dev08-na-conair.demandware.net';
+        String api_version = 'v20_4';
+        String catalogId = 'US-WaringCatalog';
+       
+        for(Product2 p: [Select Id, Name from Product2 where Id In :prodId]){
+            Http http2 = new Http();
+            HttpRequest request2 = new HttpRequest();
+            request2.setEndpoint('https://'+host_server+'/s/Sites-Site/dw/data/'+api_version+'/products/'+p.Id);
+            request2.setMethod('PUT');
+            String authorizationHeader2 = 'Bearer ' + access_token;
+            request2.setHeader('Authorization', authorizationHeader2);
+            request2.setHeader('Content-Type', 'application/json');
             String body = '{"owning_catalog_id" : "'+catalogId+'", "id" : "'+p.Id+'","name" : "'+p.Name+'"}';
-            request.setBody(body);
+            request2.setBody(body);
             
-            HttpResponse response = http.send(request);
-            System.debug(response);
-            System.debug(response.getStatusCode());
+            HttpResponse response2 = http2.send(request2);
         }
     }
-    public static void addProduct_To_SFCC(List<Product2> prod){ // Method Call after Product insert in SFDC
+    public static void addProduct_To_SFCC(List<Product2> prod){ // Method call by Product trigger after product insert
+        Set<Id> prodId = new Set<Id>();
         for(Product2 p: prod){
-            products.add(p);
+            prodId.add(p.Id);
         }
-        getSFCC_ClientToken();
-        addProduct_in_SFCC(access_token);  
-    }
+        addProduct_in_SFCC(prodId);  // Calling Callout Method
+    }    
 }
